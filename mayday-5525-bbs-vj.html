@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5525 回到那一天 BBS — VJ 前 21s 复刻</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+  body {
+    font-family: ui-monospace, "SF Mono", Menlo, "Courier New", "PingFang TC", "Microsoft JhengHei", monospace;
+    color: #c7ccff;
+    cursor: pointer;
+    user-select: none;
+  }
+  #screen { position: relative; width: 100vw; height: 100vh; }
+
+  .glow  { text-shadow: 0 0 .35em currentColor; }
+
+  /* ---------- 左侧 ---------- */
+  #left { position: absolute; left: 4vw; top: 5vh; }
+  #header { font-size: 2.6vmin; line-height: 1.5; font-weight: 700; letter-spacing: .05em; }
+  .hline { white-space: pre; min-height: 1.5em; }
+  #face {
+    margin-top: 4vh;
+    font-size: 1.55vmin;
+    line-height: 1.28;
+    white-space: pre;
+    color: #c7ccff;
+    text-shadow: 0 0 .3em rgba(160,170,255,.8);
+  }
+  #face .row { display: block; visibility: hidden; }
+
+  /* ---------- 右侧 ---------- */
+  #right { position: absolute; right: 8vw; top: 9vh; text-align: center; }
+  #castle {
+    display: inline-block;
+    font-size: 1.5vmin;
+    line-height: 1.25;
+    white-space: pre;
+    color: #dfe4ff;
+    text-shadow: 0 0 .3em rgba(170,180,255,.9);
+    visibility: hidden;
+  }
+  .rline { visibility: hidden; font-weight: 700; }
+  #r1 { margin-top: 3.5vh; font-size: 3.4vmin; letter-spacing: .35em; }
+  #r2 { margin-top: 2.2vh; font-size: 2.7vmin; letter-spacing: .12em; }
+  #r3 { margin-top: 2.2vh; font-size: 2.7vmin; letter-spacing: .06em; min-height: 1.4em; }
+  #r4 { margin-top: 1.6vh; font-size: 2.2vmin; letter-spacing: .18em; }
+  #r5 { margin-top: 2.2vh; font-size: 2.5vmin; letter-spacing: .12em; }
+  #r6 { margin-top: 2.2vh; font-size: 2.5vmin; letter-spacing: .1em; }
+  #r7 { margin-top: 1vh;   font-size: 2.5vmin; letter-spacing: .3em; }
+
+  /* ---------- 右下城市天际线 ---------- */
+  #skyline {
+    position: absolute; right: 4vw; bottom: 6vh;
+    font-size: 1.7vmin; line-height: 1.3; white-space: pre;
+    color: #2fa8ff; text-shadow: 0 0 .35em rgba(40,150,255,.9);
+  }
+  #skyline .row { display: block; visibility: hidden; }
+
+  /* ---------- 颜色 ---------- */
+  .red    { color: #ff3333; }
+  .cyan   { color: #55d8ff; }
+  .yellow { color: #ffe98a; }
+  .green  { color: #4dff88; }
+
+  /* ---------- 光标 ---------- */
+  .cursor {
+    display: inline-block;
+    width: .62em; height: 1.05em;
+    background: #c7ccff;
+    vertical-align: text-bottom;
+    animation: blink .9s steps(1) infinite;
+    box-shadow: 0 0 .4em rgba(180,190,255,.9);
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ---------- LED 闪烁出现 ---------- */
+  .pop { animation: pop .28s steps(2) 1; }
+  @keyframes pop {
+    0%   { opacity: 0; }
+    40%  { opacity: 1; }
+    60%  { opacity: .25; }
+    100% { opacity: 1; }
+  }
+
+  /* ---------- 播放控制 UI ---------- */
+  #ui {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 12px 20px 14px;
+    font-size: 12px; letter-spacing: .12em; color: #7a80a8;
+    opacity: 0; transition: opacity .35s;
+  }
+  #ui.show { opacity: 1; }
+  #bar { height: 5px; background: #1c1e2e; border-radius: 3px; cursor: pointer; }
+  #fill {
+    height: 100%; width: 0%; border-radius: 3px;
+    background: #55d8ff; box-shadow: 0 0 8px rgba(85,216,255,.8);
+  }
+  #hint { margin-top: 8px; display: flex; justify-content: space-between; }
+  #flash {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10vmin; color: #c7ccff; text-shadow: 0 0 .4em rgba(160,170,255,.9);
+    pointer-events: none; opacity: 0; transition: opacity .25s;
+  }
+</style>
+</head>
+<body>
+<div id="screen">
+  <div id="left">
+    <div id="header">
+      <div class="hline glow" id="h1"></div>
+      <div class="hline glow" id="h2"></div>
+      <div class="hline glow" id="h3"></div>
+    </div>
+    <pre id="face"></pre>
+  </div>
+
+  <div id="right">
+    <pre id="castle"></pre>
+    <div class="rline glow red"    id="r1">歡 迎 光 臨</div>
+    <div class="rline glow cyan"   id="r2">5525 回到那一天 BBS 站</div>
+    <div class="rline glow yellow" id="r3"></div>
+    <div class="rline glow cyan"   id="r4">★★★★★★★★★★★★  ★★★★★★★★★★★★</div>
+    <div class="rline glow green"  id="r5">Since 1997 . 3 . 29</div>
+    <div class="rline glow"        id="r6">本站開放 <span class="yellow">5521~5525</span> 等五個port</div>
+    <div class="rline glow"        id="r7">歡迎多加利用</div>
+  </div>
+
+  <pre id="skyline"></pre>
+</div>
+
+<div id="ui">
+  <div id="bar"><div id="fill"></div></div>
+  <div id="hint">
+    <span>空格/点击 暂停·继续　← → 快退快进　R 重播</span>
+    <span id="time">0.0 / 21s</span>
+  </div>
+</div>
+<div id="flash"></div>
+
+<!-- ASCII 素材（从视频帧反解/临摹） -->
+<pre id="face-src" hidden>
+                    .             .''~`` :~```.%$ouo.
+           ``. .``..   . ~-; .
+           `.          .:o%%:      ...:u~ `.
+          .       ... .9F. .`....   '-x$&-~   ...`...
+               .``    .'...       '.-u&o&o$$o  .......
+         ```.  .. ..        ..`   :o&$u999d9d99b&~ .
+         `..     .       .  .  ~udb##bbbduu$&ooo$$~   .
+         '..     ...  ...  -d@#bbb9u$&o%%%%o&&%^xx&  .
+          .`...````` .` %o#u&&9x-`'~^oo%%x%oo&$9du&x .
+    '`` . ``. .`...     ouo%x&o:~x&$$oo&u99dddbdbbd% .
+   ....  ..             xox%%$^9u9dbbb####bbd9u$u``
+               ..``. .`` $dbdb&###9. ..%&&&&&&o;`:  `
+   .``` .```...````  ```. ^$&&$$&-x':  %$&&&ooo';o   ..
+   .``` ...               ~%ooo$x%%^%. ^u&$$u99du##$:...
+    `                     ;o&&$u%99ou. oFbbdddduobux'
+     .. .```..````` .````` ;d#F##bud&-^^$o%%%%x%oooox'
+$x  ``` . ``  .....        `%%%%%%o%%%oooo%%%%o%%%%o&;
+x%%~                       .^^xxxxxxxxx%%oooo$%xu99du; -
+xx%^      ..  ..``. .`.`.  :u9ddddddddddbbbbu9bodddd9~'u
+b#@#F#%   ``. .```. .```  :uddd9uu$$$&&&&&&9&%%x'%&$%`xo
+ ^o%%x%%-              . `-%x%%%%%%%%oo$~;~^^~:..^ou.'%%
+ -%%%x%o-                :oo&&&&&o&o&&&$%.^o&$$ 9$u^ 99&
+   ;F@@@F@.   .```. .`` ;u#FFFFFF######FF@9o .u###` bb`
+     `^%%%%%%~           ;%oooooo%%%%%%ooo&&oo&o$` %o
+      ~%xx^x%~.   .      `^^^^xx^^-~~^^ooox%&o-~' '^-
+     `&; `#F@#b#b#F&.`   ;bbu'9dddu^  `^^^999^`..&99`
+        :o-:'  oo&&o&&o' ;$u$$&uu&uuu99o; `;%...od^.
+</pre>
+
+<pre id="castle-src" hidden>
+          25
+          /\
+         /  \
+    _   / /\ \   _
+   | \_/ /  \ \_/ |
+   | |  / /\ \  | |
+   | | / /  \ \ | |
+   | |/ / /\ \ \| |
+   |  / / /  \ \  |
+   | / / /    \ \ |
+   |/ / /      \ \|
+   | / /        \ |
+   |/ /__________\|
+   |_|__________|_|
+</pre>
+
+<pre id="skyline-src" hidden>
+   ____           ________          _____
+  |    |         |        |        |     |
+  | -- |   ___   |  --    |   ___  | --  |
+  |    |  |   |  |        |  |   | |     |
+  | -- |  | --|  |  --    |  | --| |  -- |
+  |    |  |   |  |        |  |   | |     |
+__|    |__|   |__|        |__|   |_|     |__
+</pre>
+
+<script>
+const $ = id => document.getElementById(id);
+const DUR = 21;            // 动画总时长（秒）
+
+/* ---------------- 时间轴（单位：秒） ---------------- */
+const h1parts = [
+  { t: '歡迎光臨  ', cps: 28 },
+  { t: '5525 回到那一天', cls: 'red', cps: 28 },
+  { t: ' （目前共有 ', cps: 28 },
+  { t: '55255', cls: 'cyan', cps: 28 },
+  { t: ' 人上線）', cps: 28 },
+];
+const h2parts = [
+  { t: '請輸入代號（試用請輸入 `', cps: 28 },
+  { t: 'guest', cls: 'cyan', cps: 28 },
+  { t: '`，註冊請輸入 `', cps: 28 },
+  { t: 'new', cls: 'cyan', cps: 28 },
+  { t: '`: ', cps: 28 },
+  { t: 'mayday', cps: 7 },          // 代号慢慢敲出
+];
+const h3parts = [{ t: '請輸入密碼: ', cps: 28 }];
+const r3parts = [{ t: 'Welcome to #5525 LIVE TOUR', cps: 20 }];
+
+const partsDur = ps => ps.reduce((s, p) => s + p.t.length / p.cps, 0);
+
+const T = { h1: 4.5 };
+T.h2 = T.h1 + partsDur(h1parts);
+T.h3 = T.h2 + partsDur(h2parts);
+T.h3End = T.h3 + partsDur(h3parts);
+T.face = 7.5;
+T.castle = 8.6; T.r1 = 9.1; T.r2 = 9.5;
+T.r3 = 9.9; T.r4 = T.r3 + partsDur(r3parts);
+T.r5 = T.r4 + 0.35; T.r6 = T.r5 + 0.35; T.r7 = T.r6 + 0.3;
+T.stars = 12.5;           // 密码星号开始
+T.starEvery = 0.8; T.starMax = 10;
+T.skyline = 14.0;
+
+/* ---------------- 静态元素初始化 ---------------- */
+$('castle').textContent = $('castle-src').textContent.replace(/^\n|\n$/g, '');
+const cursor = document.createElement('span');
+cursor.className = 'cursor';
+cursor.style.visibility = 'hidden';
+$('h3').appendChild(cursor);
+
+function makeRows(container, srcId, start, perLine) {
+  const rows = $(srcId).textContent.replace(/^\n|\n$/g, '').split('\n');
+  return rows.map((text, i) => {
+    const s = document.createElement('span');
+    s.className = 'row';
+    s.textContent = text || ' ';
+    container.appendChild(s);
+    // 确定性微抖动，seek 时不乱跳
+    const jitter = ((i * 2654435761) % 100) / 100 * 0.06;
+    return { el: s, at: start + i * perLine + jitter, on: false };
+  });
+}
+const faceRows = makeRows($('face'), 'face-src', T.face, 0.165);
+const skyRows = makeRows($('skyline'), 'skyline-src', T.skyline, 0.42);
+
+const popEls = ['castle', 'r1', 'r2', 'r4', 'r5', 'r6', 'r7']
+  .map(id => ({ el: $(id), at: T[id], on: false }));
+
+/* ---------------- 渲染：画面 = f(t) ---------------- */
+function renderTyped(el, parts, t0, t) {
+  let rem = t - t0;
+  if (rem <= 0) { el.innerHTML = ''; return 0; }
+  let out = '';
+  for (const p of parts) {
+    const n = Math.min(p.t.length, Math.floor(rem * p.cps));
+    if (n > 0) {
+      const txt = p.t.slice(0, n);
+      out += p.cls ? `<span class="${p.cls}">${txt}</span>` : txt;
+    }
+    rem -= p.t.length / p.cps;
+    if (rem <= 0) break;
+  }
+  el.innerHTML = out;
+}
+
+function renderRows(rows, t) {
+  for (const r of rows) {
+    const want = t >= r.at;
+    if (want && !r.on) { r.el.style.visibility = 'visible'; r.el.classList.add('pop'); r.on = true; }
+    else if (!want && r.on) { r.el.style.visibility = 'hidden'; r.el.classList.remove('pop'); r.on = false; }
+  }
+}
+
+function render(t) {
+  renderTyped($('h1'), h1parts, T.h1, t);
+  renderTyped($('h2'), h2parts, T.h2, t);
+
+  // 密码行：提示语 + 星号 + 光标
+  const promptShown = Math.max(0, Math.min(h3parts[0].t.length,
+    Math.floor((t - T.h3) * h3parts[0].cps)));
+  const nStars = t < T.stars ? 0
+    : Math.min(T.starMax, Math.floor((t - T.stars) / T.starEvery) + 1);
+  const h3 = $('h3');
+  h3.innerHTML = h3parts[0].t.slice(0, promptShown) + '*'.repeat(nStars);
+  h3.appendChild(cursor);
+  cursor.style.visibility = t >= T.h3End ? 'visible' : 'hidden';
+
+  renderRows(faceRows, t);
+  renderRows(skyRows, t);
+
+  for (const p of popEls) {
+    const want = t >= p.at;
+    if (want && !p.on) { p.el.style.visibility = 'visible'; p.el.classList.add('pop'); p.on = true; }
+    else if (!want && p.on) { p.el.style.visibility = 'hidden'; p.el.classList.remove('pop'); p.on = false; }
+  }
+
+  // Welcome 行：可见性 + 打字
+  $('r3').style.visibility = t >= T.r3 ? 'visible' : 'hidden';
+  renderTyped($('r3'), r3parts, T.r3, t);
+
+  $('fill').style.width = (t / DUR * 100) + '%';
+  $('time').textContent = t.toFixed(1) + ' / ' + DUR + 's';
+}
+
+/* ---------------- 播放控制 ---------------- */
+const q = new URLSearchParams(location.search);
+let t = parseFloat(q.get('t')) || 0, playing = !q.has('pause'), last = null;
+
+function flash(icon) {
+  const f = $('flash');
+  f.textContent = icon;
+  f.style.opacity = 1;
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => f.style.opacity = 0, 400);
+}
+function toggle() { playing = !playing; flash(playing ? '▶' : '❚❚'); showUI(); }
+function seek(dt) { t = Math.max(0, Math.min(DUR, t + dt)); showUI(); }
+function restart() { t = 0; playing = true; flash('▶'); showUI(); }
+
+let uiTimer = null;
+function showUI() {
+  $('ui').classList.add('show');
+  clearTimeout(uiTimer);
+  uiTimer = setTimeout(() => $('ui').classList.remove('show'), 2500);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); toggle(); }
+  else if (e.code === 'ArrowLeft') seek(-1);
+  else if (e.code === 'ArrowRight') seek(1);
+  else if (e.key === 'r' || e.key === 'R') restart();
+});
+document.body.addEventListener('click', e => {
+  if (e.target.closest('#bar')) {
+    const r = $('bar').getBoundingClientRect();
+    t = (e.clientX - r.left) / r.width * DUR;
+    showUI();
+  } else toggle();
+});
+document.addEventListener('mousemove', showUI);
+
+function frame(now) {
+  if (last == null) last = now;
+  const dt = (now - last) / 1000;
+  last = now;
+  if (playing) t = Math.min(DUR, t + dt);
+  render(t);
+  requestAnimationFrame(frame);
+}
+showUI();
+render(t);                    // 立即渲染一帧（暂停/深链时也有画面）
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
