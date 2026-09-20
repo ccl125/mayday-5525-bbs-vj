@@ -12,14 +12,14 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent
 data = json.loads(subprocess.check_output(['node', 'export-profile.cjs'], cwd=ROOT))
 T = data['T']
-COLORS = {'white': '#c7ccff', 'red': '#ff3333', 'cyan': '#55d8ff',
-          'yellow': '#ffe98a', 'green': '#4dff88', 'blue': '#22b8ee'}
+COLORS = {'white': '#e6e6ff', 'red': '#ff4545', 'cyan': '#5cddff',
+          'yellow': '#fff3a5', 'green': '#65ff9b', 'blue': '#38caff'}
 FONT_DIR = Path('/System/Library/Fonts/Supplemental')
 fonts = {}
 def font(size, cjk=False):
     key = (size, cjk)
     if key not in fonts:
-        fonts[key] = ImageFont.truetype(str(FONT_DIR / ('Arial Unicode.ttf' if cjk else 'Courier New.ttf')), size)
+        fonts[key] = ImageFont.truetype(str(FONT_DIR / ('Arial Unicode.ttf' if cjk else 'Courier New Bold.ttf')), size)
     return fonts[key]
 
 def width(text, size):
@@ -31,7 +31,9 @@ def text(draw, xy, value, size=18, color='white', center=False):
         x -= width(value, size) / 2
     for char in value:
         f = font(size, ord(char) > 127)
-        draw.text((x, y), char, font=f, fill=COLORS[color], anchor='lt')
+        draw.text((x, y), char, font=f, fill=COLORS[color], anchor='lt',
+                  stroke_width=0.4 if ord(char) > 127 else 0,
+                  stroke_fill=COLORS[color])
         x += f.getlength(char)
     return x
 
@@ -58,7 +60,7 @@ def logo(draw):
                 if (phase + i / 2) % 3.7 < 1.6:
                     u, v = i / steps, (i + 1) / steps
                     draw.line((a[0]+(b[0]-a[0])*u, a[1]+(b[1]-a[1])*u,
-                               a[0]+(b[0]-a[0])*v, a[1]+(b[1]-a[1])*v), fill=COLORS['white'], width=1)
+                               a[0]+(b[0]-a[0])*v, a[1]+(b[1]-a[1])*v), fill=COLORS['white'], width=2)
             phase += length
     dashed([(144,311),(144,165),(224,241),(302,165),(302,311),(239,311),(224,297),(208,311),(144,311)])
     dashed([(170,311),(224,115),(278,311)])
@@ -107,14 +109,14 @@ def frame(now):
         for value,color in values: x=text(draw,(x,488),value,18,color)
     for i,row in enumerate(data['skyRows']):
         if now>=row['at']:
-            draw.text((772,564+i*20.7),row['text'],font=font(18),fill=COLORS['blue'],anchor='lt')
-    return image.resize((960,540),Image.Resampling.LANCZOS)
+            draw.text((772,564+i*20.7),row['text'],font=font(18),fill=COLORS['blue'],anchor='lt',stroke_width=0.3)
+    return image
 
 out=ROOT/'assets'
 out.mkdir(exist_ok=True)
 poster=frame(21)
 poster.save(out/'mayday-5525-poster.png')
-palette=poster.quantize(colors=128)
+palette=poster.quantize(colors=256)
 frames=[frame(i/10).quantize(palette=palette,dither=Image.Dither.NONE) for i in range(210)]
 frames[0].save(out/'mayday-5525-21s.gif',save_all=True,append_images=frames[1:],
                duration=100,loop=0,optimize=True,disposal=1)
