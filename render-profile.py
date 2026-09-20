@@ -39,9 +39,20 @@ def text(draw, xy, value, size=18, color='white', center=False, art=False):
         x -= width(value, size) / 2
     for char in value:
         f = font(size, ord(char) > 127, art=art)
-        draw.text((x, y), char, font=f, fill=COLORS[color], anchor='lt',
-                  stroke_width=0,
-                  stroke_fill=COLORS[color])
+        fill = COLORS[color]
+        stroke = 0
+        if art and color == 'white':
+            # Preserve the source glyphs and regular Courier face. Sparse
+            # punctuation is background; dense glyphs carry the portrait.
+            if char in ":.'`":
+                fill = '#555d79'
+            elif char in '$%&#' or char.isalnum():
+                fill = '#ffffff'
+                stroke = 0.3
+            else:
+                fill = '#aeb8dc'
+        draw.text((x, y), char, font=f, fill=fill, anchor='lt',
+                  stroke_width=stroke, stroke_fill=fill)
         x += f.getlength(char)
     return x
 
