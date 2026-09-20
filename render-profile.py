@@ -15,24 +15,32 @@ T = data['T']
 COLORS = {'white': '#ffffff', 'red': '#ff4545', 'cyan': '#5cffff',
           'yellow': '#ffffa5', 'green': '#65ff9b', 'blue': '#38eaff'}
 FONT_DIR = Path('/System/Library/Fonts/Supplemental')
+PINGFANG = next(Path('/System/Library/AssetsV2').glob('com_apple_MobileAsset_Font*/*.asset/AssetData/PingFang.ttc'))
 fonts = {}
-def font(size, cjk=False):
-    key = (size, cjk)
+def font(size, cjk=False, art=False):
+    key = (size, cjk, art)
     if key not in fonts:
-        fonts[key] = ImageFont.truetype(str(FONT_DIR / ('Arial Unicode.ttf' if cjk else 'Courier New Bold.ttf')), size)
+        if art:
+            fonts[key] = ImageFont.truetype(str(FONT_DIR / 'Courier New.ttf'), size)
+        elif cjk:
+            fonts[key] = ImageFont.truetype(str(PINGFANG), size, index=10)  # PingFang TC Semibold
+        else:
+            fonts[key] = ImageFont.truetype('/System/Library/Fonts/SFNSMono.ttf', size)
+            axes = fonts[key].get_variation_axes()
+            fonts[key].set_variation_by_axes([700 if a['name']==b'Weight' else a['default'] for a in axes])
     return fonts[key]
 
 def width(text, size):
     return sum(font(size, ord(c) > 127).getlength(c) for c in text)
 
-def text(draw, xy, value, size=18, color='white', center=False):
+def text(draw, xy, value, size=18, color='white', center=False, art=False):
     x, y = xy
     if center:
         x -= width(value, size) / 2
     for char in value:
-        f = font(size, ord(char) > 127)
+        f = font(size, ord(char) > 127, art=art)
         draw.text((x, y), char, font=f, fill=COLORS[color], anchor='lt',
-                  stroke_width=0.7,
+                  stroke_width=0,
                   stroke_fill=COLORS[color])
         x += f.getlength(char)
     return x
@@ -91,7 +99,7 @@ def frame(now):
     if chunk>=0:
         face=data['faceText'][:data['faceChunks'][chunk]]
         for i,line in enumerate(face.split('\n')):
-            text(draw,(52,139+i*25),line,20)
+            text(draw,(52,139+i*25),line,20,art=True)
     if now>=T['castle']:
         logo(draw)
     right=[('r1','歡 迎 光 臨',23,'red',314),('r2','5525回到那一天 BBS 站',19,'cyan',353),
@@ -109,7 +117,7 @@ def frame(now):
         for value,color in values: x=text(draw,(x,488),value,18,color)
     for i,row in enumerate(data['skyRows']):
         if now>=row['at']:
-            draw.text((772,564+i*20.7),row['text'],font=font(18),fill=COLORS['blue'],anchor='lt',stroke_width=0.3)
+            draw.text((772,564+i*20.7),row['text'],font=font(18,art=True),fill=COLORS['blue'],anchor='lt')
     # Lift antialiased edges as well as glyph cores: GitHub downscales the
     # 1280px source, so dark edge pixels otherwise dominate thin strokes.
     return image.point([round(255 * (i / 255) ** 0.65) for i in range(256)] * 3)
