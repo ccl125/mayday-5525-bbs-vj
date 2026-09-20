@@ -12,8 +12,8 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent
 data = json.loads(subprocess.check_output(['node', 'export-profile.cjs'], cwd=ROOT))
 T = data['T']
-COLORS = {'white': '#e6e6ff', 'red': '#ff4545', 'cyan': '#5cddff',
-          'yellow': '#fff3a5', 'green': '#65ff9b', 'blue': '#38caff'}
+COLORS = {'white': '#ffffff', 'red': '#ff4545', 'cyan': '#5cffff',
+          'yellow': '#ffffa5', 'green': '#65ff9b', 'blue': '#38eaff'}
 FONT_DIR = Path('/System/Library/Fonts/Supplemental')
 fonts = {}
 def font(size, cjk=False):
@@ -32,7 +32,7 @@ def text(draw, xy, value, size=18, color='white', center=False):
     for char in value:
         f = font(size, ord(char) > 127)
         draw.text((x, y), char, font=f, fill=COLORS[color], anchor='lt',
-                  stroke_width=0.4 if ord(char) > 127 else 0,
+                  stroke_width=0.7,
                   stroke_fill=COLORS[color])
         x += f.getlength(char)
     return x
@@ -110,12 +110,15 @@ def frame(now):
     for i,row in enumerate(data['skyRows']):
         if now>=row['at']:
             draw.text((772,564+i*20.7),row['text'],font=font(18),fill=COLORS['blue'],anchor='lt',stroke_width=0.3)
-    return image
+    # Lift antialiased edges as well as glyph cores: GitHub downscales the
+    # 1280px source, so dark edge pixels otherwise dominate thin strokes.
+    return image.point([round(255 * (i / 255) ** 0.65) for i in range(256)] * 3)
 
 out=ROOT/'assets'
 out.mkdir(exist_ok=True)
 poster=frame(21)
 poster.save(out/'mayday-5525-poster.png')
+poster.resize((640,360),Image.Resampling.LANCZOS).save(out/'profile-size-preview.png')
 palette=poster.quantize(colors=256)
 frames=[frame(i/10).quantize(palette=palette,dither=Image.Dither.NONE) for i in range(210)]
 frames[0].save(out/'mayday-5525-21s.gif',save_all=True,append_images=frames[1:],
