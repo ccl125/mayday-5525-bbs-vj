@@ -35,6 +35,9 @@
     color: #c7ccff;
     text-shadow: 0 0 2px rgba(160,170,255,.65);
   }
+  #face .face-background { color: #858ca8; text-shadow: none; }
+  #face .face-highlight { color: #f4f2ff; text-shadow: 0 0 1.5px rgba(220,220,255,.5); }
+  #face .face-midtone { color: #b9c0df; text-shadow: 0 0 1px rgba(160,170,255,.3); }
 
   /* ---------- 右侧 ---------- */
   #right { position: absolute; left: 806px; top: 140px; width: 400px; text-align: center; }
@@ -250,6 +253,16 @@ function makeRows(container, srcId, start, perLine) {
   });
 }
 const faceText = $('face-src').textContent.replace(/^\n|\n$/g, '');
+// Keep the exact source characters and chunk boundaries; only tone changes.
+const escapeFace = value => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function faceMarkup(value) {
+  return (value.match(/[:.'`]+|[$%&#A-Za-z0-9]+|[^:.'`$%&#A-Za-z0-9]+/g) || []).map(run => {
+    const tone = /^[:.'`]/.test(run) ? 'background'
+      : /^[$%&#A-Za-z0-9]/.test(run) ? 'highlight' : 'midtone';
+    return `<span class="face-${tone}">${escapeFace(run)}</span>`;
+  }).join('');
+}
+let renderedFaceChunk = null;
 // DLL 每 200ms 输出 30–79 字符；固定伪随机序列让暂停/拖动可重现。
 const faceChunks = [];
 let faceEnd = 0, seed = 5525;
@@ -307,7 +320,10 @@ function render(t) {
   cursor.style.visibility = t >= T.h3End && t < T.face ? 'visible' : 'hidden';
 
   const chunk = Math.min(faceChunks.length - 1, Math.floor((t - T.face) / 0.2));
-  $('face').textContent = chunk < 0 ? '' : faceText.slice(0, faceChunks[chunk]);
+  if (chunk !== renderedFaceChunk) {
+    $('face').innerHTML = faceMarkup(chunk < 0 ? '' : faceText.slice(0, faceChunks[chunk]));
+    renderedFaceChunk = chunk;
+  }
   renderRows(skyRows, t);
 
   for (const p of popEls) {
